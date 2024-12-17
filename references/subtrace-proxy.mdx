@@ -1,5 +1,5 @@
 ---
-title: 'Proxy Command'
+title: 'subtrace proxy'
 description: 'Learn how to use the subtrace proxy command to trace HTTP traffic through a reverse proxy'
 ---
 
@@ -51,26 +51,9 @@ Enable verbose logging:
 subtrace proxy -v -listen :8080 -remote api.example.com
 ```
 
-## Configuration File
+## Writing Rules in a Configuration File
 
-The proxy supports JavaScript-based rules for filtering requests. Create a file like `rules.js`:
-
-```javascript
-// Trace only 10% of GET requests to /api
-trace("GET", "/api/*", {
-    sample: 0.1
-})
-
-// Don't trace health checks
-trace("GET", "/health", function() {
-    return false
-})
-
-// Trace all POST requests
-trace("POST", "*", function() {
-    return true
-})
-```
+Refer to the [Proxy Rules Guide](/proxy-rules-guide) guide for more information on how to write rules.
 
 ## Environment Variables
 
@@ -132,13 +115,15 @@ error: listen tcp :8080: bind: address already in use
 
 ## Security Considerations
 
-- Proxy can see all HTTP traffic
+- Proxy can see all HTTP traffic (unless you use rules to filter)
 - TLS interception requires trust configuration
 - Consider network access controls
 - Protect configuration files
 - Sanitize sensitive headers
 
 ## Example Configuration Patterns
+
+Refer to the [Proxy Rules Guide](/proxy-rules-guide) guide for more example configurations on how to write rules.
 
 ### Basic Load Balancer
 
@@ -163,9 +148,14 @@ trace("*", "*", function(req, resp) {
 })
 ```
 
+## Related Commands
+
+- [`subtrace run`](/references/subtrace-run-doc) - Run a process with tracing enabled
+- [`subtrace worker`](/references/subtrace-worker-doc) - Start a worker node (for self-hosted setups)
+- [`subtrace version`](/references/subtrace-version-doc) - Show version information
+
 ## Additional Resources
 
 - [Subtrace Documentation](https://docs.subtrace.dev)
-- [Proxy Configuration Guide](https://docs.subtrace.dev/proxy/config)
-- [Rule Writing Guide](https://docs.subtrace.dev/proxy/rules)
-- [Security Best Practices](https://docs.subtrace.dev/security)
+- [Proxy Rule Writing Guide](/proxy-rules-guide)
+{/* - [Security Best Practices](https://docs.subtrace.dev/security) */}

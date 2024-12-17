@@ -53,18 +53,32 @@
             "kubernetes"
           ]
         },
-        "benchmarks"
+        "benchmarks",
+        {
+          "group": "Troubleshooting",
+          "icon": "hammer",
+          "pages": [
+            "troubleshooting-guide"
+          ]
+        }
       ]
     },
     {
       "group": "Tutorials",
       "pages": [
         {
-          "group": "Using the dashboard",
+          "group": "Use the dashboard",
           "icon": "chart-column",
           "pages": [
             "request-graph",
             "adding-filter-clauses"
+          ]
+        },
+        {
+          "group": "Filter traffic to Subtrace",
+          "icon": "filter",
+          "pages": [
+            "proxy-rules-guide"
           ]
         }
       ]
@@ -72,10 +86,10 @@
     {
       "group": "References",
       "pages": [
-        "references/subtrace-run-doc",
-        "references/subtrace-proxy-doc",
-        "references/subtrace-worker-doc",
-        "references/subtrace-version-doc"
+        "references/subtrace-run",
+        "references/subtrace-proxy",
+        "references/subtrace-worker",
+        "references/subtrace-version"
       ]
     }
   ],

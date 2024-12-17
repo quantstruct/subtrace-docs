@@ -11,7 +11,9 @@ The `subtrace run` command allows you to trace HTTP traffic from any application
 subtrace run [flags] -- <command> [arguments]
 ```
 
-The double dash (`--`) is required to separate subtrace flags from the command you want to run.
+<Accordion title="What does the `--` mean?">
+        The `--` is a [bash builtin command](https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html) that is used to indicate that all arguments after it are treated as a command to run, not as arguments for `subtrace run`.
+</Accordion>
 
 ## Flags
 
@@ -133,7 +135,7 @@ time="2024-03-14T15:04:05Z" event_id="550e8400-e29b-41d4-a716-446655440000" http
 
 ## Related Commands
 
-- `subtrace proxy` - Run a reverse proxy with tracing
-- `subtrace version` - Show version information
-- `subtrace worker` - Start a worker node (for self-hosted setups)
+- [`subtrace proxy`](/references/subtrace-proxy-doc) - Run a reverse proxy with tracing
+- [`subtrace version`](/references/subtrace-version-doc) - Show version information
+- [`subtrace worker`](/references/subtrace-worker-doc) - Start a worker node (for self-hosted setups)
 

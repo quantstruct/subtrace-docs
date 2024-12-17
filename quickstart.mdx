@@ -33,7 +33,6 @@ icon: "rocket"
 <img className="rounded-xl" src="/quickstart-2-token.png" />
 
 **Step 4**: Install the latest version of Subtrace, set the `SUBTRACE_TOKEN` environment variable to the **tracer token** you generated in step 3, and use `subtrace run` to start your app.
-<AccordionGroup>
     <CodeGroup>
         ```bash bash
         # replace amd64 with arm64 if applicable
@@ -86,16 +85,13 @@ icon: "rocket"
             print(f"Request failed as expected: {e}")
         ```
     </CodeGroup>
-    <Accordion title="What does the `--` mean?">
-        The `--` is a [bash builtin command](https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html) that is used to indicate that all arguments after it are treated as a command to run, not as arguments for `subtrace run`.
-    </Accordion>
-</AccordionGroup>
-
+    The double dash (`--`) is required to separate subtrace flags from the command you want to run (read more in the [subtrace run reference](/references/subtrace-run-doc#usage)).
+    
 **Step 5** *(optional)*: Add the Subtrace executable to your `$PATH` so you can run `subtrace` from anywhere.
-    - Check if `/usr/local/bin` exists in your `$PATH`. If it doesn't exist, create it.
+    - Validate that `/usr/local/bin` exists in your `$PATH`.
     <CodeGroup>
     ```bash bash
-    echo $PATH && sudo mkdir -p /usr/local/bin
+    echo $PATH
     ```
     ```bash output
     /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
