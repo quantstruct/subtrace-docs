@@ -73,8 +73,9 @@
       "group": "References",
       "pages": [
         "references/subtrace-run-doc",
-        "references/subtrace-version-doc",
-        "references/subtrace-worker-doc"
+        "references/subtrace-proxy-doc",
+        "references/subtrace-worker-doc",
+        "references/subtrace-version-doc"
       ]
     }
   ],
