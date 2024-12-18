@@ -1,0 +1,219 @@
+---
+title: "Troubleshooting FAQs"
+description: "Common issues, solutions, and root causes when working with Subtrace"
+lastUpdated: "2024-12-16"
+---
+
+# Troubleshooting Guide
+
+This guide covers common issues you may encounter when using Subtrace and provides detailed solutions. If you can't find a solution to your problem, please reach out on [Discord](https://subtrace.dev/discord).
+
+## TLS/Certificate Issues
+
+### Symptoms
+- TLS / SSL handshake failures when running your services
+- Unable to get local issuer certificate
+- Max retries exceeded when connecting to via SSL
+- Applications failing to connect to HTTPS endpoints
+- Error messages containing "unknown certificate authority" or "remote error: tls: unknown certificate authority"
+
+### Root Cause
+Subtrace intercepts TLS traffic by creating an ephemeral CA certificate on your machine. Some applications and languages (like Erlang, Rust) use their own certificate stores and don't recognize this CA.
+
+### Solutions
+
+1. Disable TLS interception temporarily:
+```bash
+subtrace run -tls=false -- your_application
+```
+
+2. For Erlang/Elixir applications, configure OpenSSL:
+```bash
+ELIXIR_ERL_OPTIONS="+fnu" subtrace run -- your_application
+```
+
+## No traces in my dashboard
+
+### Symptoms
+
+- No traces appearing in dashboard, even though code runs properly
+- Connection errors to worker nodes
+- Missing traces
+- Warning that `subtrace proxy was started with -log=false but SUBTRACE_TOKEN is empty`
+
+### Root Cause
+Worker nodes need proper configuration and AuthN / AuthZ.
+
+- The docker image is not running
+- The docker image is running, but your subtrace worker is not authenticated
+- Your subtrace proxy is not authorized to send traces to your workspace
+- Your subtrace proxy has not found a tracer token in your environment
+- You did not run your subtrace command properly.
+
+### Solutions
+
+1. Check that you can run subtrace properly from your `$PATH`:
+
+```bash
+subtrace version -json
+```
+
+2. Make sure your docker image is running:
+
+```bash
+docker ps
+```
+
+3. Restart your docker image:
+
+```bash
+docker restart your_image_name
+```
+
+4. Reset your **worker token** in the [Tokens page](https://subtrace.dev/dashboard/tokens), then re-authenticate your subtrace worker:
+
+```bash
+docker run -d \
+    -e SUBTRACE_TOKEN=subt_REDACTED_WORKER_TOKEN \
+    -v subtrace:/var/lib/clickhouse \
+    subtrace.dev/worker:latest
+```
+
+5. Make sure you set `SUBTRACE_TOKEN` in your environment. Otherwise, your subtrace proxy will not be able to send traces to your workspace:
+
+```bash
+export SUBTRACE_TOKEN=subt_YOUR_TOKEN_HERE
+```
+
+<Info>
+You can also reset your **worker token** in the [Tokens page](https://subtrace.dev/dashboard/tokens)
+</Info>
+
+6. If self-hosting Clickhouse:
+   - Check Clickhouse is running: `curl http://localhost:8123`
+   - Verify database exists and is accessible
+   - Check worker logs for connection errors
+
+7. Check your network connectivity:
+   - Ensure firewall rules allow worker connections
+   - Verify DNS resolution for Clickhouse hosts
+   - Check network latency between components
+
+## Path/Binary Not Found
+
+### Symptoms
+- Docker container fails to start
+- Error messages about missing subtrace executable
+- "subtrace: executable file not found in $PATH" errors
+
+### Root Cause
+The subtrace binary must be included in the container and added to the PATH.
+
+### Solutions
+
+1. Add subtrace to your Dockerfile:
+```dockerfile
+COPY --from=subtrace/subtrace /usr/local/bin/subtrace /usr/local/bin/subtrace
+```
+
+2. If installing locally, ensure the binary is in your PATH:
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+export PATH=$PATH:/path/to/subtrace
+```
+
+## Authentication Errors
+
+### Symptoms
+- "Failed to initialize" errors
+- Token-related errors
+- Unable to connect to Subtrace services
+
+### Root Cause
+Using the wrong token type or missing token environment variable.
+
+### Solutions
+
+1. Use the correct token type:
+   - Tracer tokens: For running applications
+   - Worker tokens: For worker nodes
+
+2. Set the token environment variable:
+```bash
+export SUBTRACE_TOKEN=subt_your_token_here
+subtrace run -- your_application
+```
+
+3. Generate a new token:
+   - Visit https://subtrace.dev/dashboard
+   - Navigate to Tokens section
+   - Click "Create tracer token"
+
+## Performance Impact
+
+### Symptoms
+- Increased latency in applications
+- Performance concerns
+- Higher resource usage
+
+### Root Cause
+Subtrace adds monitoring overhead, though it's designed to be minimal (less than 0.1ms in typical cases).
+
+### Solutions
+
+1. Configure selective tracing using JavaScript:
+```javascript
+trace("POST", "/api/login", (req, resp) => {
+  // Only trace specific endpoints
+});
+```
+
+2. Adjust payload limits:
+```bash
+subtrace run --payload-limit=1024 -- your_application
+```
+
+3. Filter noisy endpoints:
+```javascript
+trace("GET", "/health", () => false); // Skip health checks
+```
+
+## Common Error Messages
+
+### "failed to create task for container"
+This usually indicates the subtrace binary isn't properly installed in your container. Add it to your Dockerfile as shown in the Path/Binary Not Found section.
+
+### "tls: unknown certificate authority"
+This occurs when applications don't trust Subtrace's ephemeral CA. Either configure the application to use the system certificate store or disable TLS interception with `-tls=false`.
+
+### "SUBTRACE_TOKEN is empty"
+Set your token as an environment variable:
+```bash
+export SUBTRACE_TOKEN=subt_your_token_here
+```
+
+## Getting Help
+
+If you encounter issues not covered in this guide:
+
+1. Check [documentation](https://docs.subtrace.dev)
+2. Join our [Discord community](https://subtrace.dev/discord)
+3. Review [GitHub Issues](https://github.com/subtrace/subtrace/issues)
+4. Contact support through [dashboard](https://subtrace.dev/dashboard)
+
+When reporting issues, please include:
+- Subtrace version (`subtrace version`)
+- Operating system and version
+- Complete error message
+- Steps to reproduce
+- Relevant application logs
+
+## Feature Status
+
+Some features are still in development:
+
+- HTTP/2 support is being worked on ([Issue #4](https://github.com/subtrace/subtrace/issues/4))
+- Cross-service tracing is planned for future releases
+- Case-sensitive column handling improvements are in progress
+
+Check our GitHub repository for the latest updates and planned features.

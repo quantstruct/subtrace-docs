@@ -1,0 +1,131 @@
+---
+title: 'subtrace worker'
+description: 'The worker command starts a Subtrace worker node that processes and stores trace data in ClickHouse.'
+---
+
+## Synopsis
+
+```bash
+subtrace worker [flags]
+```
+
+## Description
+
+The `subtrace worker` command starts a worker node that connects to ClickHouse for storing and processing trace data. The worker is responsible for:
+- Applying ClickHouse migrations
+- Handling data tunnels
+- Processing and storing trace events
+- Managing event schemas
+
+## Options
+
+| Flag | Description | Default | Required |
+|------|-------------|---------|-----------|
+| -clickhouse-host | ClickHouse server hostname | localhost | No |
+| -clickhouse-database | ClickHouse database name | subtrace | No |
+| -v | Enable verbose debug logging | false | No |
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|-----------|
+| SUBTRACE_TOKEN | Authentication token for the Subtrace service | Yes |
+| SUBTRACE_ENDPOINT | Custom API endpoint (e.g., for self-hosted deployments) | No |
+| SUBTRACE_CLICKHOUSE_SEED_NAMESPACE | UUID for seeding initial data | No |
+
+## Examples
+
+### Basic Usage
+
+Start a worker with default settings:
+```bash
+$ export SUBTRACE_TOKEN=your_token_here
+$ subtrace worker
+```
+
+### Custom ClickHouse Configuration
+
+Connect to a specific ClickHouse instance:
+```bash
+$ subtrace worker \
+    -clickhouse-host clickhouse.example.com \
+    -clickhouse-database traces
+```
+
+### Debug Mode
+
+Run with verbose logging enabled:
+```bash
+$ subtrace worker -v
+```
+
+### Docker Usage
+
+Run worker in a Docker container with built-in ClickHouse:
+```bash
+$ docker run -e SUBTRACE_TOKEN=your_token_here subtrace/worker
+```
+
+## Exit Codes
+
+| Code | Description |
+|------|-------------|
+| 0 | Successful execution |
+| 1 | General error (configuration, connection, etc.) |
+
+## Operational Notes
+
+- The worker requires a valid SUBTRACE_TOKEN for authentication
+- ClickHouse connection is retried up to 5 times with exponential backoff
+- Database migrations are automatically applied on startup
+- Worker supports automatic schema evolution as new event types are received
+- Multiple workers can be run in parallel for horizontal scaling
+- The worker maintains a persistent connection to the Subtrace service for real-time event processing
+
+## Data Schema
+
+The worker creates and maintains the following ClickHouse tables:
+- `subtrace_events_*` - Main event storage tables
+- `subtrace_ingest_*` - Temporary tables for data ingestion
+- `subtrace_migrations_*` - Schema migration tracking
+
+## Common Tasks
+
+### Verifying Worker Status
+```bash
+# Check worker logs
+$ subtrace worker -v 2>&1 | grep "starting worker node"
+
+# Verify ClickHouse connection
+$ subtrace worker -v 2>&1 | grep "connected to clickhouse server"
+```
+
+### Monitoring Event Processing
+```bash
+# Watch real-time processing with verbose logging
+$ subtrace worker -v 2>&1 | grep "tunnel"
+```
+
+### Troubleshooting
+
+If the worker fails to start:
+1. Verify SUBTRACE_TOKEN is set correctly
+2. Ensure ClickHouse is accessible
+3. Check for sufficient disk space
+4. Verify network connectivity
+5. Enable verbose logging with -v flag
+
+### Production Deployment
+
+For production environments:
+1. Use Docker for consistent deployment
+2. Configure resource limits
+3. Set up monitoring
+4. Use separate ClickHouse instance
+5. Enable automated restarts
+
+## Related Commands
+
+- [`subtrace run`](/references/subtrace-run) - Run a process with tracing enabled
+- [`subtrace proxy`](/references/subtrace-proxy) - Start a reverse proxy with tracing
+- [`subtrace version`](/references/subtrace-version) - Show version information

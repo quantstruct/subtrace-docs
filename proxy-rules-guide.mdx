@@ -1,0 +1,165 @@
+---
+title: "Writing Rules for Subtrace Proxy"
+description: "Learn how to use the subtrace proxy command to control which HTTP traffic is traced"
+lastUpdated: "2024-12-17"
+---
+# Writing Rules for Subtrace Proxy: A Beginner's Guide
+
+## Introduction
+
+When running subtrace proxy to monitor your HTTP traffic, you may not want to trace every single request - some might be too noisy (like health checks), while others may contain sensitive data. Subtrace lets you control this using JavaScript rules.
+
+## Basic Setup
+
+First, let's set up a basic proxy that forwards traffic from port 8080 to our API running on port 3000:
+
+```bash
+# Create a rules file
+touch rules.js
+
+# Start the proxy
+subtrace proxy \
+  -listen localhost:8080 \
+  -remote localhost:3000 \
+  -config rules.js
+```
+
+## Writing Your First Rule
+
+Rules are written using the `trace()` function. Let's start with a simple rule that traces all requests:
+
+```javascript
+// rules.js
+trace("*", "*", function() {
+  return true;
+});
+```
+
+The `trace()` function takes three arguments:
+1. HTTP method pattern (like "GET", "POST", "*" for all)
+2. Path pattern (like "/api/users", "/health", "*" for all) 
+3. A function that returns true to trace the request, false to ignore it
+
+## Building More Specific Rules 
+
+Let's build rules for our ecommerce API. We want to:
+- Trace all product-related requests
+- Skip health checks
+- Sample only 10% of static asset requests
+- Always trace error responses
+
+```javascript
+// rules.js
+
+// Trace all product-related endpoints
+trace("*", "/api/products/*", function() {
+  return true;
+});
+
+// Skip health checks completely
+trace("GET", "/health", function() {
+  return false;
+});
+
+// Sample 10% of static asset requests
+trace("GET", "/static/*", {
+  sample: 0.1
+});
+
+// Trace any request that returns an error
+trace("*", "*", function(req, resp) {
+  return resp.statusCode >= 400;
+});
+```
+
+## Pattern Matching
+
+The method and path patterns support:
+- Exact matches: "GET", "/api/users"
+- Wildcards: "*" matches anything  
+- Suffixes: "/api/*" matches any path starting with /api/
+
+## Adding Conditions
+
+You can make more complex decisions in your rule functions. Let's expand our example:
+
+```javascript 
+// rules.js
+
+// Trace slow requests that take > 500ms
+trace("*", "*", function(req, resp) {
+  return req.duration > 500;
+});
+
+// Trace requests with specific header
+trace("POST", "/api/*", function(req) {
+  return req.headers["x-trace-this"] === "true";
+});
+
+// Combine multiple conditions
+trace("PUT", "/api/orders/*", function(req, resp) {
+  return resp.statusCode >= 400 || // Error responses
+         req.duration > 1000 ||    // Slow requests
+         req.body.priority === "high"; // High priority orders
+});
+```
+
+## Rule Evaluation Order
+
+Rules are evaluated in the order they appear in your file. Once a rule matches and returns true, that decision is final. Use this to create precedence:
+
+```javascript
+// rules.js
+
+// First, skip health checks unconditionally
+trace("GET", "/health", () => false);
+
+// Then apply sampling to everything else
+trace("*", "*", { sample: 0.1 });
+```
+
+## Reference
+
+Common patterns:
+
+```javascript
+// Match specific HTTP methods
+trace("GET", "...")
+trace("POST", "...")
+trace("PUT", "...")
+trace("DELETE", "...")
+
+// Match paths
+trace("*", "/exact/path")
+trace("*", "/api/*")          // Everything under /api
+trace("*", "*.jpg")          // All jpg files
+trace("*", "/users/*/posts") // Match /users/123/posts
+
+// Sampling
+trace("*", "*", { sample: 0.5 }) // 50% of requests
+
+// Access request/response info
+trace("*", "*", function(req, resp) {
+  req.method          // HTTP method
+  req.path           // Request path
+  req.headers        // Request headers
+  req.body           // Request body
+  req.duration       // Request duration in ms
+  
+  resp.statusCode    // Response status code
+  resp.headers       // Response headers
+  resp.body          // Response body
+})
+```
+
+## Best Practices
+
+1. Start with broad rules and refine them
+2. Use sampling for high-volume endpoints
+3. Always skip health check endpoints
+4. Put most specific rules first
+5. Use meaningful patterns that map to your API structure
+6. Don't overload your rules with complex logic
+7. Monitor the impact of your rules on system performance
+
+The key is to find the right balance between visibility and performance for your specific use case. Start simple and iterate based on your needs.
